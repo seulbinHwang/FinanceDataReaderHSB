@@ -1,0 +1,26 @@
+Metadata-Version: 2.1
+Name: finance-datareader-HSB
+Version: 0.0.12
+Summary: The FinanceDataReader is financial data reader(crawler) for finance.
+Home-page: https://github.com/seulbinHwang/auto_trading
+Author: hsb
+Author-email: jksg01019@gmail.com
+License: GPLv3+
+Keywords: trading,development,stock,data-analysis
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Financial and Insurance Industry
+Classifier: Topic :: Software Development
+Classifier: Topic :: Office/Business :: Financial
+Classifier: License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.2
+Classifier: Programming Language :: Python :: 3.3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3
