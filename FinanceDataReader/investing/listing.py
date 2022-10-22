@@ -1,7 +1,8 @@
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-
+import cloudscraper
+import re
 from FinanceDataReader._utils import (_convert_letter_to_num, _validate_dates)
 
 
@@ -23,9 +24,12 @@ class InvestingEtfListing:
         url = 'https://kr.investing.com/etfs/' + country_map[self.country] + '-etfs'
         if self.country == 'BOND':
             url += '?&asset=2&issuer_filter=0'
-        r = requests.get(url, headers=headers)
-
-        soup = BeautifulSoup(r.text, 'lxml')
+        scraper = cloudscraper.create_scraper(
+            browser={'browser': 'firefox', 'platform': 'windows', 'mobile': False})
+        html = scraper.get(url).content
+        soup = BeautifulSoup(html, 'html.parser')
+        # r = requests.get(url, headers=headers)
+        # soup = BeautifulSoup(r.text, 'lxml') # 'lxml'
         # table 이라는 tag를 찾는다.
         id_lists = ['etfs', 'cr_etf']
         succeed = False
