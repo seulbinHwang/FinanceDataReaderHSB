@@ -3,7 +3,9 @@ from datetime import timedelta
 import requests
 import pandas as pd
 from FinanceDataReader._utils import (_convert_letter_to_num, _validate_dates)
-
+from bs4 import BeautifulSoup
+import cloudscraper
+import re
 
 class InvestingDailyReader:
 
@@ -17,8 +19,12 @@ class InvestingDailyReader:
 
     def _get_currid_investing(self, symbol, exchange=None):
         url = f'https://api.investing.com/api/search/v2/search?q={symbol}'
-        r = requests.get(url, headers={'user-agent':'Mozilla/5.0', 'domain-id': 'en', 'dnt': '1'})
+        scraper = cloudscraper.create_scraper(
+            browser={'browser': 'firefox', 'platform': 'windows', 'mobile': False})
+        r = scraper.get(url, headers={'user-agent':'Mozilla/5.0', 'domain-id': 'en', 'dnt': '1'})
         jo = r.json()
+        # r = requests.get(url, headers={'user-agent':'Mozilla/5.0', 'domain-id': 'en', 'dnt': '1'})
+        # jo = r.json()
 
         if len(jo['quotes']) == 0:
             raise ValueError(f'Symbol "{symbol}" not found')
@@ -60,7 +66,10 @@ class InvestingDailyReader:
                     f'pair_ID={curr_id}&date_from={start.strftime("%d%m%Y")}&date_to={end.strftime("%d%m%Y")}'
             for n in range(5): # retry
                 try:
-                    r = requests.get(url, headers={ 'X-Meta-Ver': '14', 'User-Agent': 'Mozilla/5.0' }, timeout=3)
+                    scraper = cloudscraper.create_scraper(
+                        browser={'browser': 'firefox', 'platform': 'windows', 'mobile': False})
+                    r = scraper.get(url, headers={ 'X-Meta-Ver': '14', 'User-Agent': 'Mozilla/5.0' }, timeout=3)
+                    # r = requests.get(url, headers={ 'X-Meta-Ver': '14', 'User-Agent': 'Mozilla/5.0' }, timeout=3)
                 except requests.exceptions.Timeout:
                     print(f'timeout (retries: {n+1})')
                     time.sleep(2)

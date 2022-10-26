@@ -88,9 +88,9 @@ def StockListingAll(market):
     '''
     market = market.upper()
     if market in [ 'NASDAQ', 'NYSE', 'AMEX', 'SSE', 'SZSE', 'HKEX', 'TSE', 'HOSE']:
-        return NaverStockListing(market).read()
+        return NaverStockListing(market).read_all()
     if market in [ 'KRX', 'KOSPI', 'KOSDAQ', 'KONEX']:
-        return KrxStockListing(market).read()
+        return KrxStockListing(market).read_all()
     if market in [ 'KRX-DELISTING' ]:
         return KrxDelisting(market).read()
     if market in [ 'KRX-MARCAP' ]:
