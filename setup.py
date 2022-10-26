@@ -4,16 +4,19 @@ import codecs
 
 """
 python setup.py bdist_wheel
-twine upload dist/finance_datareader_hsb-0.0.12-py3-none-any.whl  
+twine upload dist/finance_datareader_hsb-0.1.6-py3-none-any.whl  
 
- pip install finance-datareader-hsb==0.0.11  
+
+
+pip install finance-datareader-hsb==0.1.6
+ 
 """
 here = os.path.abspath(os.path.dirname(__file__))
 #exclude=['docs', 'tutorial']
 print(find_packages())
 setup(
     name             = 'finance-datareader-HSB',
-    version          = '0.0.12',
+    version          = '0.1.6',
     description      = 'The FinanceDataReader is financial data reader(crawler) for finance.',
     author           = 'hsb',
     author_email     = 'jksg01019@gmail.com',
