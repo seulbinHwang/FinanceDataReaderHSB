@@ -88,8 +88,10 @@ def StockListingAll(market):
     '''
     market = market.upper()
     if market in [ 'NASDAQ', 'NYSE', 'AMEX', 'SSE', 'SZSE', 'HKEX', 'TSE', 'HOSE']:
+        print(f'{market}에 대한 crawling 을 시작합니다.')
         return NaverStockListing(market).read_all()
     if market in [ 'KRX', 'KOSPI', 'KOSDAQ', 'KONEX']:
+        print(f'{market}에 대한 crawling 을 시작합니다.')
         return KrxStockListing(market).read_all()
     if market in [ 'KRX-DELISTING' ]:
         return KrxDelisting(market).read()

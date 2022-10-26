@@ -147,6 +147,10 @@ class KrxStockListing:
                     # ren_cols[f'{target_category}_1'] = f'{target_category_name}_1'
                     # ren_cols[f'{target_category}_4'] = f'{target_category_name}_4'
         for idx in range(len(df)):
+            current_idx = str(idx)
+            total_idx = str(len(df))
+            if idx % 20 == 0:
+                print(f'진행상황:{current_idx}/{total_idx}')
             target = df[idx:idx + 1]
             if pd.isna(target['ListingDate']).any():
                 continue

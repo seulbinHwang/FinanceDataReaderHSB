@@ -136,6 +136,8 @@ class NaverStockListing:
 
         df_list = []
         for page in range(100):
+            page_str = str(page)
+            print(f'진행상황:{page_str}/100')
             url = f'http://api.stock.naver.com/stock/exchange/{exchange}/marketValue?page={page+1}&pageSize=60'
             try:
                 r = requests.get(url, headers=headers)
