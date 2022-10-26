@@ -229,11 +229,9 @@ class NaverStockListing:
                                                     str(tds[2].text).replace(",", ''))
                                                 df.loc[idx, f'{target_category}_4'] = float(
                                                     str(tds[5].text).replace(",", ''))
-                                            print('0:', df.loc[idx, f'{target_category}_0'])
-                                            print('1:', df.loc[idx, f'{target_category}_1'])
-                                            print('4:', df.loc[idx, f'{target_category}_4'])
                                         except:
-                                            print(f'{target_category} 데이터가 없습니다:', code)
+                                            pass
+                                            # print(f'{target_category} 데이터가 없습니다:', code)
                         except:
                             pass
                             # try:

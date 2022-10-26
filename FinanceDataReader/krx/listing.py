@@ -149,7 +149,6 @@ class KrxStockListing:
         for idx in range(len(df)):
             target = df[idx:idx + 1]
             if pd.isna(target['ListingDate']).any():
-                print('해당 stock은 ETF로 판별되어 생략합니다.')
                 continue
             code = str(target['Symbol'].values[0])
 
@@ -218,7 +217,6 @@ class KrxStockListing:
                                         break
                             for target_category in target_categories:
                                 if target_category == category:
-                                    print('target_category:', target_category)
                                     tds = tr.find_all('td')
                                     if url_index == 0:
                                         if target_category == '시가총액':
