@@ -3,7 +3,6 @@ FinanceDataReader/__init__.py
 FinanceDataReader/_utils.py
 FinanceDataReader/chart.py
 FinanceDataReader/data.py
-FinanceDataReader/setup.py
 FinanceDataReader/fred/__init__.py
 FinanceDataReader/fred/data.py
 FinanceDataReader/investing/__init__.py

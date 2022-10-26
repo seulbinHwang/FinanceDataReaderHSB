@@ -78,6 +78,37 @@ def StockListing(market):
         msg = "market='%s' is not implemented" % market
         raise NotImplementedError(msg)
 
+def StockListingAll(market):
+    '''
+    read stock list of stock exchanges
+    * market: 'S&P500', 'NASDAQ', 'NYSE', 'AMEX', 'SSE', 'SZSE', 'HKEX', 'TSE', 'HOSE',
+            'KRX', 'KOSPI', 'KOSDAQ', 'KONEX'
+            'KRX-DELISTING', 'KRX-MARCAP', 'KRX-ADMINISTRATIVE'
+            'ETF/KR'
+    '''
+    market = market.upper()
+    if market in [ 'NASDAQ', 'NYSE', 'AMEX', 'SSE', 'SZSE', 'HKEX', 'TSE', 'HOSE']:
+        return NaverStockListing(market).read_all()
+    if market in [ 'KRX', 'KOSPI', 'KOSDAQ', 'KONEX']:
+        return KrxStockListing(market).read_all()
+    if market in [ 'KRX-DELISTING' ]:
+        return KrxDelisting(market).read()
+    if market in [ 'KRX-MARCAP' ]:
+        return KrxMarcapListing(market).read()
+    if market in [ 'KRX-ADMINISTRATIVE' ]:
+        return KrxAdministrative(market).read()
+    if market in [ 'S&P500', 'SP500']:
+        return WikipediaStockListing(market).read()
+    if market.startswith('ETF'):
+        toks = market.split('/')
+        etf, country = toks[0], toks[1]
+        if country.upper() == 'KR':
+            return NaverEtfListing().read()
+        return InvestingEtfListing(country).read()
+    else:
+        msg = "market='%s' is not implemented" % market
+        raise NotImplementedError(msg)
+
 def EtfListing(country='KR'):
     '''
     'EtfListing() will deprecated. Use fdr.StockListing("ETF/KR") instead of fdr.EtfListing("KR")'
