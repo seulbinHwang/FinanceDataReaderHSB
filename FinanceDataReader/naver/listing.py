@@ -24,8 +24,9 @@ C:\> pip insatll tqdm
 
 
 class NaverStockListing:
-    def __init__(self, market):
+    def __init__(self, market, DataReader):
         self.market = market.upper()
+        self.DataReader = DataReader
 
     def read(self):
         verbose, raw = 1, False

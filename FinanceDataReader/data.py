@@ -59,7 +59,7 @@ def StockListing(market):
     '''
     market = market.upper()
     if market in ['NASDAQ', 'NYSE', 'AMEX', 'SSE', 'SZSE', 'HKEX', 'TSE', 'HOSE']:
-        return NaverStockListing(market).read()
+        return NaverStockListing(market, DataReader).read()
     if market in ['KRX', 'KOSPI', 'KOSDAQ', 'KONEX']:
         return KrxStockListing(market, DataReader).read()
     if market in ['KRX-DELISTING']:
@@ -92,7 +92,7 @@ def StockListingAll(market):
     market = market.upper()
     if market in ['NASDAQ', 'NYSE', 'AMEX', 'SSE', 'SZSE', 'HKEX', 'TSE', 'HOSE']:
         print(f'{market}에 대한 crawling 을 시작합니다.')
-        return NaverStockListing(market).read_all()
+        return NaverStockListing(market, DataReader).read_all()
     if market in ['KRX', 'KOSPI', 'KOSDAQ', 'KONEX']:
         print(f'{market}에 대한 crawling 을 시작합니다.')
         return KrxStockListing(market, DataReader).read_all()
