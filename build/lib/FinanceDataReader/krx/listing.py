@@ -30,36 +30,48 @@ class KrxStockListing:
 
         url = 'http://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13'
         df_listing = pd.read_html(url, header=0, flavor='bs4', encoding='EUC-KR')[0]
-        cols_ren = {'회사명': 'Name', '종목코드': 'Symbol', '업종': 'Sector', '주요제품': 'Industry',
-                    '상장일': 'ListingDate', '결산월': 'SettleMonth', '대표자명': 'Representative',
-                    '홈페이지': 'HomePage', '지역': 'Region', }
+        cols_ren = {
+            '회사명': 'Name',
+            '종목코드': 'Symbol',
+            '업종': 'Sector',
+            '주요제품': 'Industry',
+            '상장일': 'ListingDate',
+            '결산월': 'SettleMonth',
+            '대표자명': 'Representative',
+            '홈페이지': 'HomePage',
+            '지역': 'Region',
+        }
         df_listing = df_listing.rename(columns=cols_ren)
         df_listing['Symbol'] = df_listing['Symbol'].apply(lambda x: '{:06d}'.format(x))
         df_listing['ListingDate'] = pd.to_datetime(df_listing['ListingDate'])
 
         # KRX 주식종목검색
-        data = {'bld': 'dbms/comm/finder/finder_stkisu', }
+        data = {
+            'bld': 'dbms/comm/finder/finder_stkisu',
+        }
         r = requests.post('http://data.krx.co.kr/comm/bldAttendant/getJsonData.cmd', data=data)
 
         jo = json.loads(r.text)
         df_finder = json_normalize(jo, 'block1')
 
         # full_code, short_code, codeName, marketCode, marketName, marketEngName, ord1, ord2
-        df_finder = df_finder.rename(columns={
-            'full_code': 'FullCode',
-            'short_code': 'Symbol',
-            'codeName': 'Name',
-            'marketCode': 'MarketCode',
-            'marketName': 'MarketName',
-            'marketEngName': 'Market',
-            'ord1': 'Ord1',
-            'ord2': 'Ord2',
-        })
+        df_finder = df_finder.rename(
+            columns={
+                'full_code': 'FullCode',
+                'short_code': 'Symbol',
+                'codeName': 'Name',
+                'marketCode': 'MarketCode',
+                'marketName': 'MarketName',
+                'marketEngName': 'Market',
+                'ord1': 'Ord1',
+                'ord2': 'Ord2',
+            })
 
         # 상장회사목록, 주식종목검색 병합
         df_left = df_finder[['Symbol', 'Market', 'Name']]
-        df_right = df_listing[
-            ['Symbol', 'Sector', 'Industry', 'ListingDate', 'SettleMonth', 'Representative', 'HomePage', 'Region']]
+        df_right = df_listing[[
+            'Symbol', 'Sector', 'Industry', 'ListingDate', 'SettleMonth', 'Representative', 'HomePage', 'Region'
+        ]]
 
         df_master = pd.merge(df_left, df_right, how='left', left_on='Symbol', right_on='Symbol')
         if self.market in ['KONEX', 'KOSDAQ', 'KOSPI']:

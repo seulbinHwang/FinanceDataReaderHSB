@@ -24,8 +24,9 @@ C:\> pip insatll tqdm
 
 
 class NaverStockListing:
-    def __init__(self, market):
+    def __init__(self, market, DataReader):
         self.market = market.upper()
+        self.DataReader = DataReader
 
     def read(self):
         verbose, raw = 1, False
@@ -89,10 +90,12 @@ class NaverStockListing:
         merged = pd.concat(df_list)
         if raw:
             return merged
-        ren_cols = {'symbolCode': 'Symbol',
-                    'stockNameEng': 'Name',
-                    'industryCodeType.industryGroupKor': 'Industry',
-                    'industryCodeType.code': 'IndustryCode'}
+        ren_cols = {
+            'symbolCode': 'Symbol',
+            'stockNameEng': 'Name',
+            'industryCodeType.industryGroupKor': 'Industry',
+            'industryCodeType.code': 'IndustryCode'
+        }
         merged = merged[ren_cols.keys()]
         merged.rename(columns=ren_cols, inplace=True)
         merged.reset_index(drop=True, inplace=True)
@@ -169,6 +172,8 @@ class NaverStockListing:
             }
             df['data_exists'] = False
             ren_cols['data_exists'] = 'data_exists'
+            df['월수익률변동성(년)'] = 0.
+            ren_cols['월수익률변동성(년)'] = '월수익률변동성(년)'
 
             categories_group = [summary_category, ratios_category, financials_category]  #
             for categories_dict in categories_group:
@@ -185,6 +190,37 @@ class NaverStockListing:
                 if idx > 3:
                     break
                 code = str(target['symbolCode'].values[0])
+                today = datetime.date.today()
+                day_of_the_week = today.weekday()
+                if day_of_the_week >= 5:
+                    minus = day_of_the_week - 4
+                    start_day = today - timedelta(days=minus)
+                else:
+                    start_day = today
+                # 어제 날짜: 오늘 - 1일
+                one_month = int(365 / 12)
+                year_price_delta_list = []
+                for _ in range(12):
+                    price_df = self.DataReader(code, start_day, start_day)
+                    price = price_df.iat[0, 3]
+
+                    last_month = start_day - timedelta(days=one_month)
+                    day_of_the_week = last_month.weekday()
+                    if day_of_the_week >= 5:
+                        minus = day_of_the_week - 4
+                        last_month = last_month - timedelta(days=minus)
+                    price_df = self.DataReader(code, last_month, last_month)
+                    last_month_price = price_df.iat[0, 3]
+
+                    earning_ratio = price / last_month_price - 1.
+                    year_price_delta_list.append(earning_ratio)
+
+                    start_day = last_month
+                # TypeError: loop of ufunc does not support argument 0 of type Series which has no callable conjugate method
+                std = np.std(np.array(year_price_delta_list))
+
+                df.loc[idx, '월수익률변동성(년)'] = float(std)
+
                 summary_url = f'https://www.choicestock.co.kr/search/summary/{code}'
                 ratios_url = f'https://www.choicestock.co.kr/search/invest/{code}'
                 financials_url = f'https://www.choicestock.co.kr/search/financials/{code}/MRQ'
