@@ -1,10 +1,12 @@
 import requests
 from bs4 import BeautifulSoup
+import datetime
+from datetime import timedelta
 import json
 import pandas as pd
 import cloudscraper
 import re
-
+import numpy as np
 try:
     from pandas import json_normalize
 except ImportError:
@@ -24,8 +26,9 @@ C:\> pip insatll tqdm
 
 
 class NaverStockListing:
-    def __init__(self, market):
+    def __init__(self, market, DataReader):
         self.market = market.upper()
+        self.DataReader = DataReader
 
     def read(self):
         verbose, raw = 1, False
@@ -89,10 +92,12 @@ class NaverStockListing:
         merged = pd.concat(df_list)
         if raw:
             return merged
-        ren_cols = {'symbolCode': 'Symbol',
-                    'stockNameEng': 'Name',
-                    'industryCodeType.industryGroupKor': 'Industry',
-                    'industryCodeType.code': 'IndustryCode'}
+        ren_cols = {
+            'symbolCode': 'Symbol',
+            'stockNameEng': 'Name',
+            'industryCodeType.industryGroupKor': 'Industry',
+            'industryCodeType.code': 'IndustryCode'
+        }
         merged = merged[ren_cols.keys()]
         merged.rename(columns=ren_cols, inplace=True)
         merged.reset_index(drop=True, inplace=True)
@@ -137,8 +142,10 @@ class NaverStockListing:
         df_list = []
         for page in range(100):
             page_str = str(page)
+            if page > 0:
+                break
             print(f'진행상황:{page_str}/100')
-            url = f'http://api.stock.naver.com/stock/exchange/{exchange}/marketValue?page={page+1}&pageSize=60'
+            url = f'http://api.stock.naver.com/stock/exchange/{exchange}/marketValue?page={page + 1}&pageSize=60'
             try:
                 r = requests.get(url, headers=headers)
                 jo = json.loads(r.text)
@@ -165,19 +172,66 @@ class NaverStockListing:
                 '영업활동': '영업활동 현금흐름',
                 '잉여현금': '잉여 현금흐름'
             }
+            df['data_exists'] = False
+            ren_cols['data_exists'] = 'data_exists'
+            df['월수익률변동성(년)'] = 0.
+            ren_cols['월수익률변동성(년)'] = '월수익률변동성(년)'
+
             categories_group = [summary_category, ratios_category, financials_category]  #
             for categories_dict in categories_group:
                 for target_category, target_category_name in categories_dict.items():
-                    df[f'{target_category}_0'] = None
-                    df[f'{target_category}_1'] = None
-                    df[f'{target_category}_4'] = None
+                    df[f'{target_category}_0'] = 0.
+                    df[f'{target_category}_1'] = 0.
+                    df[f'{target_category}_4'] = 0.
                     if target_category_name is not None:
                         ren_cols[f'{target_category}_0'] = f'{target_category_name}_0'
                         # ren_cols[f'{target_category}_1'] = f'{target_category_name}_1'
                         # ren_cols[f'{target_category}_4'] = f'{target_category_name}_4'
             for idx in range(len(df)):
                 target = df[idx:idx + 1]
+                if idx > 3:
+                    break
                 code = str(target['symbolCode'].values[0])
+                today = datetime.date.today()
+                day_of_the_week = today.weekday()
+                if day_of_the_week >= 5:
+                    minus = day_of_the_week - 4
+                    start_day = today - timedelta(days=minus)
+                else:
+                    start_day = today
+                # 어제 날짜: 오늘 - 1일
+                one_month = int(365 / 12)
+                year_price_delta_list = []
+                for _ in range(12):
+                    while True:
+                        try:
+                            price_df = self.DataReader(code, start_day, start_day)
+                            price = price_df.iat[0, 3]
+                            break
+                        except:
+                            start_day = start_day - timedelta(days=1)
+
+                    last_month = start_day - timedelta(days=one_month)
+                    day_of_the_week = last_month.weekday()
+                    if day_of_the_week >= 5:
+                        minus = day_of_the_week - 4
+                        last_month = last_month - timedelta(days=minus)
+                    while True:
+                        try:
+                            price_df = self.DataReader(code, last_month, last_month)
+                            last_month_price = price_df.iat[0, 3]
+                            break
+                        except:
+                            last_month = last_month - timedelta(days=1)
+
+                    earning_ratio = price / last_month_price - 1.
+                    year_price_delta_list.append(earning_ratio)
+
+                    start_day = last_month
+                std = np.std(np.array(year_price_delta_list))
+
+                df.loc[idx, '월수익률변동성(년)'] = float(std)
+
                 summary_url = f'https://www.choicestock.co.kr/search/summary/{code}'
                 ratios_url = f'https://www.choicestock.co.kr/search/invest/{code}'
                 financials_url = f'https://www.choicestock.co.kr/search/financials/{code}/MRQ'
@@ -224,6 +278,7 @@ class NaverStockListing:
                                                 text = str(tds[0].text)
                                                 text = float(re.sub(r'[^0-9]', '', text))
                                                 df.loc[idx, f'{target_category}_0'] = float(str(text).replace(",", ''))
+                                                df.loc[idx, 'data_exists'] = True
                                             else:
                                                 df.loc[idx, f'{target_category}_0'] = float(
                                                     str(tds[1].text).replace(",", ''))
@@ -231,6 +286,7 @@ class NaverStockListing:
                                                     str(tds[2].text).replace(",", ''))
                                                 df.loc[idx, f'{target_category}_4'] = float(
                                                     str(tds[5].text).replace(",", ''))
+                                                df.loc[idx, 'data_exists'] = True
                                         except:
                                             pass
                                             # print(f'{target_category} 데이터가 없습니다:', code)
@@ -253,6 +309,14 @@ class NaverStockListing:
             elif verbose == 2:
                 print('.', end='')
             eps = 0.00000001
+
+            df['1/PER_0'] = (1 / (df['PER_0'] + eps)).astype(float)
+            df['1/PBR_0'] = (1 / (df['PBR_0'] + eps)).astype(float)
+            df['1/PSR_0'] = (1 / (df['PSR_0'] + eps)).astype(float)
+            ren_cols['1/PER_0'] = '1/PER_0'
+            ren_cols['1/PBR_0'] = '1/PBR_0'
+            ren_cols['1/PSR_0'] = '1/PSR_0'
+
             df['GP/A_0'] = (df['매출총이익_0'] / (df['자산총계_0']) + eps).astype(float)
             df['GP/A_1'] = (df['매출총이익_1'] / (df['자산총계_1']) + eps).astype(float)
             df['GP/A_4'] = (df['매출총이익_4'] / (df['자산총계_4']) + eps).astype(float)
@@ -288,7 +352,10 @@ class NaverStockListing:
             df['차입금증가율(년)'] = (df['차입금_0'] / (df['차입금_1'] + eps) - 1.).astype(float)
             ren_cols['차입금증가율(년)'] = '차입금증가율(년)'
             df['PFCR_0'] = (df['시가총액_0'] / (df['잉여현금_0'] + eps)).astype(float)
+            df['1/PFCR_0'] = (1 / (df['PFCR_0'] + eps)).astype(float)
+
             ren_cols['PFCR_0'] = 'PFCR_0'
+            ren_cols['1/PFCR_0'] = '1/PFCR_0'
 
             df = df.round(3)
             df_list.append(df)

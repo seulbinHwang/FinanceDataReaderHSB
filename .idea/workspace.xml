@@ -1,17 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="d922f8a2-ce25-461b-a646-6102f955afdf" name="Changes" comment="feature(all_data) : crawl all individual data">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/FinanceDataReader/data.py" beforeDir="false" afterPath="$PROJECT_DIR$/FinanceDataReader/data.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/FinanceDataReader/krx/listing.py" beforeDir="false" afterPath="$PROJECT_DIR$/FinanceDataReader/krx/listing.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/FinanceDataReader/naver/listing.py" beforeDir="false" afterPath="$PROJECT_DIR$/FinanceDataReader/naver/listing.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/lib/FinanceDataReader/data.py" beforeDir="false" afterPath="$PROJECT_DIR$/build/lib/FinanceDataReader/data.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/lib/FinanceDataReader/krx/listing.py" beforeDir="false" afterPath="$PROJECT_DIR$/build/lib/FinanceDataReader/krx/listing.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/lib/FinanceDataReader/naver/listing.py" beforeDir="false" afterPath="$PROJECT_DIR$/build/lib/FinanceDataReader/naver/listing.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/finance_datareader_HSB.egg-info/PKG-INFO" beforeDir="false" afterPath="$PROJECT_DIR$/finance_datareader_HSB.egg-info/PKG-INFO" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
-    </list>
+    <list default="true" id="d922f8a2-ce25-461b-a646-6102f955afdf" name="Changes" comment="feature(all_data) : crawl price 변동성" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -19,6 +9,11 @@
   </component>
   <component name="ChangesViewManager" show_ignored="true" />
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="master" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
     <option name="ROOT_SYNC" value="DONT_SYNC" />
   </component>
@@ -106,7 +101,42 @@
       <option name="project" value="LOCAL" />
       <updated>1666795305109</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="feature(all_data) : crawl price 변동성">
+      <created>1667100286197</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1667100286200</updated>
+    </task>
+    <task id="LOCAL-00009" summary="feature(all_data) : crawl price 변동성">
+      <created>1667100919381</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1667100919383</updated>
+    </task>
+    <task id="LOCAL-00010" summary="feature(all_data) : crawl price 변동성">
+      <created>1667101019942</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1667101019943</updated>
+    </task>
+    <task id="LOCAL-00011" summary="feature(all_data) : crawl price 변동성">
+      <created>1667101103662</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1667101103667</updated>
+    </task>
+    <task id="LOCAL-00012" summary="feature(all_data) : crawl price 변동성">
+      <created>1667101309146</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1667101309149</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -123,7 +153,7 @@
                   <entry key="branch">
                     <value>
                       <list>
-                        <option value="master" />
+                        <option value="perf/crawl-financial-statements" />
                       </list>
                     </value>
                   </entry>
@@ -141,6 +171,7 @@
     </ignored-roots>
     <MESSAGE value="test" />
     <MESSAGE value="feature(all_data) : crawl all individual data" />
-    <option name="LAST_COMMIT_MESSAGE" value="feature(all_data) : crawl all individual data" />
+    <MESSAGE value="feature(all_data) : crawl price 변동성" />
+    <option name="LAST_COMMIT_MESSAGE" value="feature(all_data) : crawl price 변동성" />
   </component>
 </project>
