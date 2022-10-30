@@ -6,7 +6,7 @@ import json
 import pandas as pd
 import cloudscraper
 import re
-
+import numpy as np
 try:
     from pandas import json_normalize
 except ImportError:
@@ -203,22 +203,31 @@ class NaverStockListing:
                 one_month = int(365 / 12)
                 year_price_delta_list = []
                 for _ in range(12):
-                    price_df = self.DataReader(code, start_day, start_day)
-                    price = price_df.iat[0, 3]
+                    while True:
+                        try:
+                            price_df = self.DataReader(code, start_day, start_day)
+                            price = price_df.iat[0, 3]
+                            break
+                        except:
+                            start_day = start_day - timedelta(days=1)
 
                     last_month = start_day - timedelta(days=one_month)
                     day_of_the_week = last_month.weekday()
                     if day_of_the_week >= 5:
                         minus = day_of_the_week - 4
                         last_month = last_month - timedelta(days=minus)
-                    price_df = self.DataReader(code, last_month, last_month)
-                    last_month_price = price_df.iat[0, 3]
+                    while True:
+                        try:
+                            price_df = self.DataReader(code, last_month, last_month)
+                            last_month_price = price_df.iat[0, 3]
+                            break
+                        except:
+                            last_month = last_month - timedelta(days=1)
 
                     earning_ratio = price / last_month_price - 1.
                     year_price_delta_list.append(earning_ratio)
 
                     start_day = last_month
-                # TypeError: loop of ufunc does not support argument 0 of type Series which has no callable conjugate method
                 std = np.std(np.array(year_price_delta_list))
 
                 df.loc[idx, '월수익률변동성(년)'] = float(std)
