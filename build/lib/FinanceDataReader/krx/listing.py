@@ -1,6 +1,7 @@
 import io
 import time
-from datetime import datetime, timedelta
+import datetime
+from datetime import timedelta
 import requests
 from bs4 import BeautifulSoup
 import numpy as np
@@ -18,8 +19,9 @@ except ImportError:
 
 
 class KrxStockListing:
-    def __init__(self, market):
+    def __init__(self, market, DataReader):
         self.market = market
+        self.DataReader = DataReader
 
     def read(self):
         # KRX 상장회사목록
@@ -137,15 +139,21 @@ class KrxStockListing:
             'Industry': 'Industry',
             'ListingDate': 'ListingDate',
         }
+        df['data_exists'] = False
+        ren_cols['data_exists'] = 'data_exists'
+        df['월수익률변동성(년)'] = 0.
+        ren_cols['월수익률변동성(년)'] = '월수익률변동성(년)'
+
         for categories_dict in categories_group:
             for target_category, target_category_name in categories_dict.items():
-                df[f'{target_category}_0'] = None
-                df[f'{target_category}_1'] = None
-                df[f'{target_category}_4'] = None
+                df[f'{target_category}_0'] = 0.
+                df[f'{target_category}_1'] = 0.
+                df[f'{target_category}_4'] = 0.
                 if target_category_name is not None:
                     ren_cols[f'{target_category}_0'] = f'{target_category_name}_0'
                     # ren_cols[f'{target_category}_1'] = f'{target_category_name}_1'
                     # ren_cols[f'{target_category}_4'] = f'{target_category_name}_4'
+        count = 0
         for idx in range(len(df)):
             current_idx = str(idx)
             total_idx = str(len(df))
@@ -155,6 +163,39 @@ class KrxStockListing:
             if pd.isna(target['ListingDate']).any():
                 continue
             code = str(target['Symbol'].values[0])
+            count += 1
+            if count > 3:
+                break
+            today = datetime.date.today()
+            day_of_the_week = today.weekday()
+            if day_of_the_week >= 5:
+                minus = day_of_the_week - 4
+                start_day = today - timedelta(days=minus)
+            else:
+                start_day = today
+            # 어제 날짜: 오늘 - 1일
+            one_month = int(365 / 12)
+            year_price_delta_list = []
+            for _ in range(12):
+                price_df = self.DataReader(code, start_day, start_day)
+                price = price_df.iat[0, 3]
+
+                last_month = start_day - timedelta(days=one_month)
+                day_of_the_week = last_month.weekday()
+                if day_of_the_week >= 5:
+                    minus = day_of_the_week - 4
+                    last_month = last_month - timedelta(days=minus)
+                price_df = self.DataReader(code, last_month, last_month)
+                last_month_price = price_df.iat[0, 3]
+
+                earning_ratio = price / last_month_price - 1.
+                year_price_delta_list.append(earning_ratio)
+
+                start_day = last_month
+            # TypeError: loop of ufunc does not support argument 0 of type Series which has no callable conjugate method
+            std = np.std(np.array(year_price_delta_list))
+
+            df.loc[idx, '월수익률변동성(년)'] = float(std)
 
             summary_url = f'https://navercomp.wisereport.co.kr/v2/company/c1010001.aspx?cmp_cd={code}'
             financial_analysis_url = f'https://navercomp.wisereport.co.kr/v2/company/c1030001.aspx?cmp_cd={code}&cn='
@@ -172,8 +213,11 @@ class KrxStockListing:
                 options.add_argument('headless')  # 웹 브라우저를 띄우지 않는 headless chrome 옵션 적용
                 options.add_argument('disable-gpu')  # GPU 사용 안함
                 options.add_argument('lang=ko_KR')  # 언어 설정
+                options.add_argument('no-sandbox')
+                options.add_argument('disable-dev-shm-usage')
                 driver = webdriver.Chrome(executable_path="/Users/user/PycharmProjects/auto_trading/chromedriver",
                                           options=options)
+                print('target_url:', target_url)
                 driver.get(target_url)
                 if url_index == 0:
                     try:
@@ -227,6 +271,7 @@ class KrxStockListing:
                                             text = str(tds[0].text)
                                             text = float(re.sub(r'[^0-9]', '', text))
                                             df.loc[idx, f'{target_category}_0'] = float(str(text).replace(",", ''))
+                                            df['data_exists'] = True
                                         else:
                                             try:
                                                 a_0 = float(str(tds[4].text).replace(",", ''))
@@ -243,6 +288,7 @@ class KrxStockListing:
                                             df.loc[idx, f'{target_category}_0'] = a_0
                                             df.loc[idx, f'{target_category}_1'] = a_1
                                             df.loc[idx, f'{target_category}_4'] = a_4
+                                            df['data_exists'] = True
                                     else:
                                         try:
                                             a_0 = float(str(tds[5].text).replace(",", ''))
@@ -259,6 +305,7 @@ class KrxStockListing:
                                         df.loc[idx, f'{target_category}_0'] = a_0
                                         df.loc[idx, f'{target_category}_1'] = a_1
                                         df.loc[idx, f'{target_category}_4'] = a_4
+                                        df['data_exists'] = True
                         except:
                             pass
         eps = 0.00000001
@@ -267,17 +314,17 @@ class KrxStockListing:
         df['GP/A_4'] = (df['매출총이익_4'] / (df['자산총계_4']) + eps).astype(float)
         ren_cols['GP/A_0'] = 'GP/A_0'
 
-        df['자산성장률(년)'] = (df['자산총계_0'] / (df['자산총계_4'] + eps) - 1.).astype(float)
+        df['자산성장률(년)'] = ((df['자산총계_0'] / (df['자산총계_4'] + eps)) - 1.).astype(float)
         ren_cols['자산성장률(년)'] = '자산성장률(년)'
 
-        df['영업이익성장률(분기)'] = (df['영업이익_0'] / (df['영업이익_1'] + eps) - 1.).astype(float)
+        df['영업이익성장률(분기)'] = ((df['영업이익_0'] / (df['영업이익_1'] + eps)) - 1.).astype(float)
         ren_cols['영업이익성장률(분기)'] = '영업이익성장률(분기)'
-        df['영업이익성장률(년)'] = (df['영업이익_0'] / (df['영업이익_4'] + eps) - 1.).astype(float)
+        df['영업이익성장률(년)'] = ((df['영업이익_0'] / (df['영업이익_4'] + eps)) - 1.).astype(float)
         ren_cols['영업이익성장률(년)'] = '영업이익성장률(년)'
 
-        df['순이익성장률(분기)'] = (df['당기순이익_0'] / (df['당기순이익_1'] + eps) - 1.).astype(float)
+        df['순이익성장률(분기)'] = ((df['당기순이익_0'] / (df['당기순이익_1'] + eps)) - 1.).astype(float)
         ren_cols['순이익성장률(분기)'] = '순이익성장률(분기)'
-        df['순이익성장률(년)'] = (df['당기순이익_0'] / (df['당기순이익_4'] + eps) - 1.).astype(float)
+        df['순이익성장률(년)'] = ((df['당기순이익_0'] / (df['당기순이익_4'] + eps)) - 1.).astype(float)
         ren_cols['순이익성장률(년)'] = '순이익성장률(년)'
 
         #         # 차입금: 단기차입금 + 장기차입금 + 비유동금융부채 + 사채 + 유동성장기부채
@@ -289,15 +336,25 @@ class KrxStockListing:
 
         a_0 = (df['영업이익_0'] / (df['차입금_0']) + eps).astype(float)
         a_1 = (df['영업이익_1'] / (df['차입금_1']) + eps).astype(float)
-        df['(영업이익/차입금)증가율(분기)'] = (a_0 / (a_1 + eps) - 1.).astype(float)
+        df['(영업이익/차입금)증가율(분기)'] = ((a_0 / (a_1 + eps)) - 1.).astype(float)
         ren_cols['(영업이익/차입금)증가율(분기)'] = '(영업이익/차입금)증가율(분기)'
 
-        df['차입금증가율(년)'] = (df['차입금_0'] / (df['차입금_1'] + eps) - 1.).astype(float)
+        df['차입금증가율(년)'] = ((df['차입금_0'] / (df['차입금_1'] + eps)) - 1.).astype(float)
         ren_cols['차입금증가율(년)'] = '차입금증가율(년)'
+        df['1/PER_0'] = (1 / (df['PER_0'] + eps)).astype(float)
+        df['1/PBR_0'] = (1 / (df['PBR_0'] + eps)).astype(float)
+        ren_cols['1/PER_0'] = '1/PER_0'
+        ren_cols['1/PBR_0'] = '1/PBR_0'
+
         df['PSR_0'] = (df['시가총액_0'] / (df['매출액(수익)_0'] + eps)).astype(float)
+        df['1/PSR_0'] = (1 / (df['PSR_0'] + eps)).astype(float)
         ren_cols['PSR_0'] = 'PSR_0'
+        ren_cols['1/PSR_0'] = '1/PSR_0'
         df['PFCR_0'] = (df['시가총액_0'] / (df['FCF_0'] + eps)).astype(float)
+        df['1/PFCR_0'] = (1 / (df['PFCR_0'] + eps)).astype(float)
         ren_cols['PFCR_0'] = 'PFCR_0'
+        ren_cols['1/PFCR_0'] = '1/PFCR_0'
+
         df = df[ren_cols.keys()]
         df.rename(columns=ren_cols, inplace=True)
         df.reset_index(drop=True, inplace=True)

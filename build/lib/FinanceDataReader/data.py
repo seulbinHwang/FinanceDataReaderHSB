@@ -13,6 +13,7 @@ import re
 import pandas as pd
 from datetime import datetime, timedelta
 
+
 def DataReader(symbol, start=None, end=None, exchange=None, data_source=None):
     '''
     read price data from various exchanges or data source
@@ -22,14 +23,14 @@ def DataReader(symbol, start=None, end=None, exchange=None, data_source=None):
     * data_source: 'FRED' 
     '''
     start, end = _validate_dates(start, end)
-    
+
     # FRED Reader
     if data_source and data_source.upper() == 'FRED':
         return FredReader(symbol, start, end, exchange, data_source).read()
 
     # KRX and Naver Finance
-    if (symbol[:5].isdigit() and exchange==None) or \
-       (symbol[:5].isdigit() and exchange and exchange.upper() in ['KRX', '한국거래소']):
+    if (symbol[:5].isdigit() and exchange == None) or \
+            (symbol[:5].isdigit() and exchange and exchange.upper() in ['KRX', '한국거래소']):
         return NaverDailyReader(symbol, start, end, exchange, data_source).read()
 
     # KRX-DELISTING
@@ -40,45 +41,15 @@ def DataReader(symbol, start=None, end=None, exchange=None, data_source=None):
     reader = InvestingDailyReader
     df = reader(symbol, start, end, exchange, data_source).read()
     end = min([pd.to_datetime(end), datetime.today()])
-    while len(df) and df.index[-1] < end: # issues/30
+    while len(df) and df.index[-1] < end:  # issues/30
         more = reader(symbol, df.index[-1] + timedelta(1), end, exchange, data_source).read()
         if len(more) == 0:
             break
         df = pd.concat([df, more])
     return df
 
-def StockListing(market):
-    '''
-    read stock list of stock exchanges
-    * market: 'S&P500', 'NASDAQ', 'NYSE', 'AMEX', 'SSE', 'SZSE', 'HKEX', 'TSE', 'HOSE', 
-            'KRX', 'KOSPI', 'KOSDAQ', 'KONEX'
-            'KRX-DELISTING', 'KRX-MARCAP', 'KRX-ADMINISTRATIVE'
-            'ETF/KR'
-    '''
-    market = market.upper()
-    if market in [ 'NASDAQ', 'NYSE', 'AMEX', 'SSE', 'SZSE', 'HKEX', 'TSE', 'HOSE']:
-        return NaverStockListing(market).read()
-    if market in [ 'KRX', 'KOSPI', 'KOSDAQ', 'KONEX']:
-        return KrxStockListing(market).read()
-    if market in [ 'KRX-DELISTING' ]:
-        return KrxDelisting(market).read()
-    if market in [ 'KRX-MARCAP' ]:
-        return KrxMarcapListing(market).read()
-    if market in [ 'KRX-ADMINISTRATIVE' ]:
-        return KrxAdministrative(market).read()
-    if market in [ 'S&P500', 'SP500']:
-        return WikipediaStockListing(market).read()
-    if market.startswith('ETF'):
-        toks = market.split('/')
-        etf, country = toks[0], toks[1]
-        if country.upper() == 'KR':
-            return NaverEtfListing().read()
-        return InvestingEtfListing(country).read()        
-    else:
-        msg = "market='%s' is not implemented" % market
-        raise NotImplementedError(msg)
 
-def StockListingAll(market):
+def StockListing(market):
     '''
     read stock list of stock exchanges
     * market: 'S&P500', 'NASDAQ', 'NYSE', 'AMEX', 'SSE', 'SZSE', 'HKEX', 'TSE', 'HOSE',
@@ -87,19 +58,17 @@ def StockListingAll(market):
             'ETF/KR'
     '''
     market = market.upper()
-    if market in [ 'NASDAQ', 'NYSE', 'AMEX', 'SSE', 'SZSE', 'HKEX', 'TSE', 'HOSE']:
-        print(f'{market}에 대한 crawling 을 시작합니다.')
-        return NaverStockListing(market).read_all()
-    if market in [ 'KRX', 'KOSPI', 'KOSDAQ', 'KONEX']:
-        print(f'{market}에 대한 crawling 을 시작합니다.')
-        return KrxStockListing(market).read_all()
-    if market in [ 'KRX-DELISTING' ]:
+    if market in ['NASDAQ', 'NYSE', 'AMEX', 'SSE', 'SZSE', 'HKEX', 'TSE', 'HOSE']:
+        return NaverStockListing(market).read()
+    if market in ['KRX', 'KOSPI', 'KOSDAQ', 'KONEX']:
+        return KrxStockListing(market, DataReader).read()
+    if market in ['KRX-DELISTING']:
         return KrxDelisting(market).read()
-    if market in [ 'KRX-MARCAP' ]:
+    if market in ['KRX-MARCAP']:
         return KrxMarcapListing(market).read()
-    if market in [ 'KRX-ADMINISTRATIVE' ]:
+    if market in ['KRX-ADMINISTRATIVE']:
         return KrxAdministrative(market).read()
-    if market in [ 'S&P500', 'SP500']:
+    if market in ['S&P500', 'SP500']:
         return WikipediaStockListing(market).read()
     if market.startswith('ETF'):
         toks = market.split('/')
@@ -110,6 +79,41 @@ def StockListingAll(market):
     else:
         msg = "market='%s' is not implemented" % market
         raise NotImplementedError(msg)
+
+
+def StockListingAll(market):
+    '''
+    read stock list of stock exchanges
+    * market: 'S&P500', 'NASDAQ', 'NYSE', 'AMEX', 'SSE', 'SZSE', 'HKEX', 'TSE', 'HOSE',
+            'KRX', 'KOSPI', 'KOSDAQ', 'KONEX'
+            'KRX-DELISTING', 'KRX-MARCAP', 'KRX-ADMINISTRATIVE'
+            'ETF/KR'
+    '''
+    market = market.upper()
+    if market in ['NASDAQ', 'NYSE', 'AMEX', 'SSE', 'SZSE', 'HKEX', 'TSE', 'HOSE']:
+        print(f'{market}에 대한 crawling 을 시작합니다.')
+        return NaverStockListing(market).read_all()
+    if market in ['KRX', 'KOSPI', 'KOSDAQ', 'KONEX']:
+        print(f'{market}에 대한 crawling 을 시작합니다.')
+        return KrxStockListing(market, DataReader).read_all()
+    if market in ['KRX-DELISTING']:
+        return KrxDelisting(market).read()
+    if market in ['KRX-MARCAP']:
+        return KrxMarcapListing(market).read()
+    if market in ['KRX-ADMINISTRATIVE']:
+        return KrxAdministrative(market).read()
+    if market in ['S&P500', 'SP500']:
+        return WikipediaStockListing(market).read()
+    if market.startswith('ETF'):
+        toks = market.split('/')
+        etf, country = toks[0], toks[1]
+        if country.upper() == 'KR':
+            return NaverEtfListing().read()
+        return InvestingEtfListing(country).read()
+    else:
+        msg = "market='%s' is not implemented" % market
+        raise NotImplementedError(msg)
+
 
 def EtfListing(country='KR'):
     '''
